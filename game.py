@@ -237,14 +237,15 @@ class Audio:
         self.music = [arcade.load_sound(AUDIO_DIRECTORY + "game_level_0.mp3"),
                       arcade.load_sound(AUDIO_DIRECTORY + "game_level_1.mp3"),
                       arcade.load_sound(AUDIO_DIRECTORY + "game_level_2.mp3")]
-
-    def play_music(self, level):  # Метод проигрывания музыки
+        
+# Методы проигрывания музыки и остановки музыки
+    def play_music(self, level):  
         if self.isPlaying:
             self.stop_music()
         self.media_player = self.music[level].play()
         self.isPlaying = True
 
-    def stop_music(self):  # Метод остановки музыки
+    def stop_music(self):  
         if self.isPlaying:
             arcade.stop_sound(self.media_player)
         self.isPlaying = False
