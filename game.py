@@ -10,6 +10,8 @@ MAPS_DIRECTORY = "maps/"
 PLAYER_JUMP_POWER = 13
 PLAYER_GRAVITY = 6
 
+SPRITES_ANIMATIONS_DELAY = 5
+
 def main():
     game = Game(0)  
     arcade.run()
@@ -23,6 +25,7 @@ class Game(arcade.Window):
         self.map = None
         self.camera = None
         self.player = None
+        self.audio = Audio()
         self.map_index = level
         self.setup(level)
 
@@ -30,7 +33,9 @@ class Game(arcade.Window):
         self.map = Map()
         self.camera = Camera()
         self.player = Player()
+        self.audio = Audio()
         self.map_index = level
+        self.audio.play_music(level)
         self.map.setup(self.map_index)
         self.player.setup(self.map)
         self.camera.setup(self.map_index, self.player)
@@ -74,8 +79,21 @@ class Player:
 
     def __init__(self):
         self.sprite_list = arcade.SpriteList()
-        self.player_sprite = arcade.Sprite(arcade.load_texture(IMAGES_DIRECTORY + "player.png"), 1)
+        self.tex_right = arcade.load_texture(IMAGES_DIRECTORY + "player.png")
+        self.tex_left = self.tex_right.flip_horizontally()
+        self.player_sprite = arcade.Sprite(self.tex_right, 1)
         self.sprite_list.append(self.player_sprite)
+
+        self.tex_fly_right = arcade.load_texture(IMAGES_DIRECTORY + "player_jump.png")
+        self.tex_fly_left = self.tex_fly_right.flip_horizontally()
+        self.current_walk_sprite_id = 0
+        self.tex_walk_right = []
+        self.tex_walk_left = []
+        for i in range(0, 3):
+            self.tex_walk_right.append(arcade.load_texture(IMAGES_DIRECTORY + "player_walk_" + str(i) + ".png"))
+            self.tex_walk_left.append(self.tex_walk_right[i].flip_horizontally())
+
+        self.sprite_change = 0
         self.map = None
         self.key_pressed_left = False
         self.key_pressed_right = False
@@ -83,6 +101,7 @@ class Player:
         self.jump_timer = 0
         self.jumping = False
         self.on_ground = False
+        self.direction = False
 
     def setup(self, _map):
         self.map = _map
@@ -95,8 +114,10 @@ class Player:
     def update(self):
         if self.key_pressed_right:
             self.speed = 5
+            self.direction = True
         elif self.key_pressed_left:
             self.speed = -5
+            self.direction = False
         else:
             self.speed = 0
 
@@ -110,6 +131,7 @@ class Player:
         if not self.on_ground:
             self.player_sprite.center_y -= PLAYER_GRAVITY
         self.collision()
+        self.animate_player()
 
     def jump(self):  
         if self.on_ground:
@@ -132,6 +154,31 @@ class Player:
                     self.player_sprite.center_y -= 10
             else:
                 self.on_ground = False
+
+    def animate_player(self):
+        if not self.on_ground:  # Чел летит
+            if self.direction:
+                self.player_sprite.texture = self.tex_fly_right
+            else:
+                self.player_sprite.texture = self.tex_fly_left
+        elif not self.key_pressed_right and not self.key_pressed_left:  # Чел стоит
+            if self.direction:
+                self.player_sprite.texture = self.tex_right
+            else:
+                self.player_sprite.texture = self.tex_left
+        else:  # Чел бегает
+            if self.sprite_change <= 0:  # если таймер смены картинки достиг 0, значит пора менять картинку
+                self.sprite_change = SPRITES_ANIMATIONS_DELAY
+                self.current_walk_sprite_id += 1
+                if self.current_walk_sprite_id > 2:  # текущая ID картинки
+                    self.current_walk_sprite_id = 0  # если ID > количества картинок (в случае с бегом 3 картинки), то делаем её равной 0
+                if self.direction:
+                    self.player_sprite.texture = self.tex_walk_right[self.current_walk_sprite_id]
+                else:
+                    self.player_sprite.texture = self.tex_walk_left[self.current_walk_sprite_id]
+            else:
+                self.sprite_change -= 1  # понижаем наш таймер смены картинки
+
 
 
 class Map:
@@ -171,11 +218,38 @@ class Camera:
         self.center_camera_to_position(self.player.player_sprite.position)
 
     def center_camera_to_position(self, position):
-        screen_center_x = position[0] - SCREEN_WIDTH / 2
-        screen_center_y = position[1] - SCREEN_HEIGHT / 2
+        screen_center_x = self.lerp(self.main_camera.position[0], position[0] - (SCREEN_WIDTH / 2), 0.1)
+        screen_center_y = self.lerp(self.main_camera.position[1], position[1] - (SCREEN_HEIGHT / 2), 0.1)
         self.main_camera.move_to([screen_center_x, screen_center_y])
 
     def draw_bg(self):
         arcade.draw_texture_rectangle(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, SCREEN_WIDTH, SCREEN_HEIGHT, self.bg_list[0])
 
+    def lerp(self, a, b, t):
+        return (1 - t) * a + t * b
+
+
+class Audio:
+
+    def __init__(self):
+        self.media_player = None
+        self.isPlaying = False
+        self.music = [arcade.load_sound(AUDIO_DIRECTORY + "game_level_0.mp3"),
+                      arcade.load_sound(AUDIO_DIRECTORY + "game_level_1.mp3"),
+                      arcade.load_sound(AUDIO_DIRECTORY + "game_level_2.mp3")]
+
+    def play_music(self, level):  # Метод проигрывания музыки
+        if self.isPlaying:
+            self.stop_music()
+        self.media_player = self.music[level].play()
+        self.isPlaying = True
+
+    def stop_music(self):  # Метод остановки музыки
+        if self.isPlaying:
+            arcade.stop_sound(self.media_player)
+        self.isPlaying = False
+
+
 main()
+
+
