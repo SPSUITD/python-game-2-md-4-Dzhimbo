@@ -609,7 +609,7 @@ class Camera:
 
         arcade.draw_xywh_rectangle_filled(health_offset[0] + 4,
                                           health_offset[1] + 4, (size[0] - 8) * self.player.health / PLAYER_MAX_HEALTH,
-                                          size[1] - 8, arcade.csscolor.RED)
+                                          size[1] - 8, arcade.csscolor.GREEN)
 
         if not self.player.game_started:
             if self.map_index > 0:
