@@ -45,9 +45,7 @@ class Game(arcade.Window):
         self.camera = Camera()
         self.audio = Audio()
         self.player = Player()
-        #  Код текущей карты (0/1/2)
         self.map_index = level
-        #  Инициализация классов
         self.bullets = Bullets(self.player, self.map)
         self.map.setup(self.map_index, self.bullets, self.player)
         self.audio.setup()
@@ -58,7 +56,6 @@ class Game(arcade.Window):
 
 
     def restart(self, with_level):
-        # Перезапуск уровня
         self.audio.stop_music()
         self.map = None
         self.camera = None
@@ -247,38 +244,38 @@ class Player:
                 block_index = distances.index(min(distances))
                 block = self.map.scene[collisions[i]][block_index]
 
-                if collisions[i] == 'collision':  # почва
+                if collisions[i] == 'collision':  
                     if (self.player_sprite.right > block.left and self.player_sprite.left < block.right) \
                             and (self.player_sprite.top > block.bottom and self.player_sprite.bottom < block.top):
-                        self.on_ground = True  # на земле
+                        self.on_ground = True  
                         if self.player_sprite.bottom < block.top - 15:
-                            self.player_sprite.center_x -= 10  # отбрасываем от стены
+                            self.player_sprite.center_x -= 10  
                             self.player_sprite.center_y -= 10
-                    else:  # иначе если нет столкновения
-                        self.on_ground = False  # не стоит на земле
+                    else:  
+                        self.on_ground = False 
                 elif collisions[i] == 'damage':
                     if (self.player_sprite.right > block.left and self.player_sprite.left < block.right) \
-                            and (self.player_sprite.top > block.bottom and self.player_sprite.bottom < block.top): # есть столкновение?
-                        self.map.scene['damage'][block_index].remove_from_sprite_lists()  # убираем бонус с карты
+                            and (self.player_sprite.top > block.bottom and self.player_sprite.bottom < block.top): 
+                        self.map.scene['damage'][block_index].remove_from_sprite_lists()  
                         self.big_bullets_timer = 400
                 elif collisions[i] == 'invulnerability':
                     if (self.player_sprite.right > block.left and self.player_sprite.left < block.right) \
-                            and (self.player_sprite.top > block.bottom and self.player_sprite.bottom < block.top): # есть столкновение?
-                        self.map.scene['invulnerability'][block_index].remove_from_sprite_lists()  # убираем бонус с карты
-                        self.invulnerability_timer = 300  # делаем игрока неуязвимым
+                            and (self.player_sprite.top > block.bottom and self.player_sprite.bottom < block.top): 
+                        self.map.scene['invulnerability'][block_index].remove_from_sprite_lists() 
+                        self.invulnerability_timer = 300 
                         self.player_sprite.alpha = 100
                 elif collisions[i] == 'health':
                     if (self.player_sprite.right > block.left and self.player_sprite.left < block.right) \
                             and (
                             self.player_sprite.top > block.bottom and self.player_sprite.bottom < block.top):
                         self.map.scene['health'][
-                            block_index].remove_from_sprite_lists()  # убираем бонус с карты
-                        self.add_health(50)  # добавляем здоровье
+                            block_index].remove_from_sprite_lists()  
+                        self.add_health(50)  
 
-        #  проверка столкновений с врагами
-        for i in range(0, self.map.enemys.__len__()):  # от 0 до кол-ва врагов
+        
+        for i in range(0, self.map.enemys.__len__()):  
             if not self.map.enemys[i].dead:
-                enemy_sprite = self.map.enemys[i].sprite  # берём спрайт врага в локальную переменную
+                enemy_sprite = self.map.enemys[i].sprite  
 
                 if (self.player_sprite.right > enemy_sprite.left and self.player_sprite.left < enemy_sprite.right) \
                         and (
@@ -299,7 +296,7 @@ class Player:
             self.player_sprite.alpha = 100
             self.add_health(damage)
 
-    # Стрельба игрока
+    
     def shoot(self):
         isRight = 1
         if not self.direction:
@@ -312,10 +309,8 @@ class Player:
         scale = 1
         if self.big_bullets_timer > 0:
             scale = 3
-
         self.bullets.spawn_bullet(self.player_sprite.position, direction,
                                   IMAGES_DIRECTORY + "player_attack_" + str(sprite_index) + ".png", 0, True, scale)
-
     def animate_player(self):
         if not self.on_ground:
             if self.direction:
@@ -327,18 +322,18 @@ class Player:
                 self.player_sprite.texture = self.tex_right
             else:
                 self.player_sprite.texture = self.tex_left
-        else:  # Чел бегает
-            if self.sprite_change <= 0:  # если таймер смены картинки достиг 0, значит пора менять картинку
+        else:  
+            if self.sprite_change <= 0:  
                 self.sprite_change = SPRITES_ANIMATIONS_DELAY
                 self.current_walk_sprite_id += 1
-                if self.current_walk_sprite_id > 2:  # текущая ID картинки
-                    self.current_walk_sprite_id = 0  # если ID > количества картинок (в случае с бегом 3 картинки), то делаем её равной 0
+                if self.current_walk_sprite_id > 2:  
+                    self.current_walk_sprite_id = 0  
                 if self.direction:
                     self.player_sprite.texture = self.tex_walk_right[self.current_walk_sprite_id]
                 else:
                     self.player_sprite.texture = self.tex_walk_left[self.current_walk_sprite_id]
             else:
-                self.sprite_change -= 1  # понижаем наш таймер смены картинки
+                self.sprite_change -= 1 
 
 
 
@@ -360,14 +355,14 @@ class Map:
         self.scene = arcade.Scene.from_tilemap(self.tile_map)
 
         for i in range(0, 6):
-            # Пока на сцене > 0 блоков с меткой "enemy0"/"enemy1"/"enemy2" до "enemy5"
+          
             enemystr = "enemy" + str(i)
             if self.scene.__contains__(enemystr):
                 while self.scene[enemystr].__len__() > 0:
-                    enemy = self.Enemy(self.scene[enemystr][0], i, self, self.bullets)  # Спавн врага
-                    self.enemys.append(enemy)  # записываем в лист классов
+                    enemy = self.Enemy(self.scene[enemystr][0], i, self, self.bullets) 
+                    self.enemys.append(enemy)  
                     self.enemySpriteList.append(enemy.sprite)
-                    self.scene[enemystr].pop(0)  # удаляем блок с меткой
+                    self.scene[enemystr].pop(0) 
 
     def spawn_player(self, player_sprite):
         player_sprite.position = self.scene["spawn"][0].position
@@ -378,7 +373,7 @@ class Map:
         for enemy in self.enemys:
             enemy.draw()
 
-    def update(self, player_pos):  # Обновление каждого врага
+    def update(self, player_pos):  
         for enemy in self.enemys:
             enemy.update(player_pos)
 
@@ -387,14 +382,13 @@ class Map:
         for enemy in self.enemys:
             if not enemy.dead:
                 all_enemy_dead = False
-        # Все враги мертвы, уровень пройден
         if all_enemy_dead:
             self.player.game_win = True
 
 
 
 
-    class Enemy:  # Класс врага
+    class Enemy:  
         def __init__(self, sprite, _type, _map, _bullets):
             self.direction = True
             self.speed = 2
@@ -407,14 +401,13 @@ class Map:
             self.tex_left = self.tex_right.flip_horizontally()
 
             self.sprite = arcade.Sprite(self.tex_right, ENEMY_SCALE[_type])
-            self.sprite.position = sprite.position  # выставляем позицию
-            self.sprite.center_y -= 3  # опускаем вниз чтобы работали столкновения
-            #  записываем в свой класс переменную карты
+            self.sprite.position = sprite.position 
+            self.sprite.center_y -= 3 
             self.map = _map
             self.bullets = _bullets
 
         def update(self, player_pos):
-            if not self.dead:  # Если враг жив
+            if not self.dead:  
                 distance = (pow((self.sprite.position[0] - player_pos[0]), 2) + pow(
                     (self.sprite.position[1] - player_pos[1]), 2)) ** 0.5
                 if distance < ENEMY_RADIOUS[self.enemyType] and abs(self.sprite.center_y - player_pos[1]) < 100:
@@ -436,7 +429,7 @@ class Map:
                                                   (size[0] - 8) * self.health / ENEMY_HEALTH[self.enemyType],
                                                   size[1] - 8, arcade.csscolor.RED)
 
-        def shoot(self, player_pos):  # Стрельба врага по игроку.
+        def shoot(self, player_pos):  
             if self.reload == 0:
                 if ((self.sprite.position[0] > player_pos[0] and self.direction) or
                         (self.sprite.position[0] < player_pos[0] and not self.direction)):
@@ -456,7 +449,7 @@ class Map:
             for block in self.map.scene["collision"]:
                 distances.append((pow((block.center_x - self.sprite.center_x), 2) + pow(
                     (block.center_y - self.sprite.center_y), 2)) ** 0.5)
-            block_index = distances.index(min(distances))  # Берем объект, дистанция до которого минимальна
+            block_index = distances.index(min(distances))  
             block = self.map.scene["collision"][block_index]
 
 
@@ -485,7 +478,6 @@ class Map:
             self.map.check_for_level_complete()
 
 
-# Класс отвечает за спавн пуль, их обновление и отрисовку
 class Bullets:
 
     def __init__(self, _player, _map):
@@ -506,7 +498,7 @@ class Bullets:
                 if self.bullets[i].lifetime <= 0:
                     self.bullet_list.pop(i)
                     self.bullets.pop(i)
-                    break  # Выход из цикла чтоб не было ошибок
+                    break  
 
     def spawn_bullet(self, position, direction, sprite, _type, friendly_bullet, scale):
         new_bullet = Bullet(position, direction, sprite, BULLETS_SPEED[_type], BULLETS_DAMAGE[_type],
@@ -514,8 +506,6 @@ class Bullets:
         self.bullets.append(new_bullet)
         self.bullet_list.append(new_bullet.bullet_sprite)
 
-
-# Просто класс отвечающий за пулю
 class Bullet:
     def __init__(self, position, direction, path_to_sprite, speed, damage, lifetime, friendly_button, scale):
         tex = arcade.load_texture(path_to_sprite)
@@ -533,9 +523,9 @@ class Bullet:
         self.bullet_sprite.center_x += (self.bullet_direction[0] * self.speed)
         self.bullet_sprite.center_y += (self.bullet_direction[1] * self.speed)
         self.lifetime -= 1
-        if self.friendly_button:  # Если эта пуля выпущена игроком
+        if self.friendly_button: 
             distances = []
-            if enemy_list.__len__() > 0:  # Проверяем столкновения только с врагами
+            if enemy_list.__len__() > 0: 
                 for enemy in enemy_list:
                     distances.append((pow((self.bullet_sprite.position[0] - enemy.sprite.position[0]), 2) + pow(
                         (self.bullet_sprite.position[1] - enemy.sprite.position[1]), 2)) ** 0.5)
@@ -544,7 +534,7 @@ class Bullet:
                     enemy_index = distances.index(min_distance)
                     enemy_list[enemy_index].damage_enemy(self.damage)
                     self.lifetime = 0
-        else:  # Иначе это вражеская пуля
+        else:  
             player_pos = player.player_sprite.position
             distance = (pow((self.bullet_sprite.position[0] - player_pos[0]), 2) + pow(
                 (self.bullet_sprite.position[1] - player_pos[1]), 2)) ** 0.5
@@ -553,7 +543,7 @@ class Bullet:
                 self.lifetime = 0
 
 
-# Класс отвечающий за камеру, отрисовку объектов
+
 class Camera:
     def __init__(self):
         self.position_x = 0
@@ -593,7 +583,7 @@ class Camera:
 
         self.bg_list = []
         self.bg_list.append(
-            arcade.load_texture(IMAGES_DIRECTORY + f"levelbg{map_index}.png"))  # загружаем фон с map_index
+            arcade.load_texture(IMAGES_DIRECTORY + f"levelbg{map_index}.png"))  
         self.map_index = map_index
         self.player = player
 
@@ -608,11 +598,11 @@ class Camera:
         position = self.position_x, 0
         self.main_camera.move_to(position)
     def draw_bg(self):
-        # bg
+       
         arcade.draw_texture_rectangle(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, SCREEN_WIDTH, SCREEN_HEIGHT, self.bg_list[0])
     def draw_gui(self):
 
-        # Здоровье
+      
         health_offset = [55, 30]
         size = [100, 20]
         self.player_health.draw()
@@ -639,7 +629,6 @@ class Camera:
         return (1 - t) * a + t * b
 
 
-# Класс отвечающий за проигрывание звуков
 class Audio:
 
     def __init__(self):
@@ -649,7 +638,6 @@ class Audio:
         self.isPlaying = False
 
     def setup(self):
-        # Просто загружаем музыку и звуки в массивы
         self.music = [arcade.load_sound(AUDIO_DIRECTORY + "game_level_0.mp3"),
                       arcade.load_sound(AUDIO_DIRECTORY + "game_level_1.mp3"),
                       arcade.load_sound(AUDIO_DIRECTORY + "game_level_2.mp3")]
@@ -664,7 +652,5 @@ class Audio:
         if self.isPlaying:
             arcade.stop_sound(self.media_player)
         self.isPlaying = False
-
-
 
 main()
